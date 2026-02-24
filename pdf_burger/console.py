@@ -1,7 +1,7 @@
 """Terminal output for pdf-burger.
 
-Functional approach: create_console() returns a frozen dataclass with
-bound output functions — no mutable global state.
+Immutable Console created via factory — no mutable global state.
+Output functions are closures bound at creation time.
 """
 
 from __future__ import annotations
