@@ -69,13 +69,13 @@ class TestCollectPdfs:
     def test_non_pdf_file_raises(self, tmp_path):
         txt = tmp_path / "note.txt"
         txt.write_text("hello")
-        with pytest.raises(ValueError, match="PDFファイルではありません"):
+        with pytest.raises(ValueError, match="not a PDF file"):
             collect_pdfs([str(txt)])
 
     def test_empty_directory_warns(self, tmp_path):
         d = tmp_path / "empty"
         d.mkdir()
-        with pytest.raises(ValueError, match="結合するPDFファイルが見つかりません"):
+        with pytest.raises(ValueError, match="no PDF files to merge"):
             collect_pdfs([str(d)])
 
     def test_no_pdfs_at_all_raises(self, tmp_path):
@@ -87,7 +87,7 @@ class TestCollectPdfs:
     def test_corrupt_explicit_file_raises(self, tmp_path):
         bad = tmp_path / "bad.pdf"
         bad.write_text("not a pdf")
-        with pytest.raises(ValueError, match="PDFファイルを読み込めません"):
+        with pytest.raises(ValueError, match="cannot read PDF"):
             collect_pdfs([str(bad)])
 
     def test_corrupt_file_in_dir_skipped(self, make_pdf, tmp_path):

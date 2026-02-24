@@ -21,11 +21,11 @@ def _validate_pdf(path: Path) -> None:
 
         reader = PdfReader(str(path))
         if len(reader.pages) == 0:
-            raise ValueError(f"PDFにページがありません: {path}")
+            raise ValueError(f"PDF has no pages: {path}")
     except ValueError:
         raise
     except Exception as e:
-        raise ValueError(f"PDFファイルを読み込めません: {path} ({e})")
+        raise ValueError(f"cannot read PDF: {path} ({e})")
 
 
 def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
@@ -41,11 +41,11 @@ def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
         path = Path(raw).resolve()
 
         if not path.exists():
-            raise FileNotFoundError(f"パスが見つかりません: {raw}")
+            raise FileNotFoundError(f"path not found: {raw}")
 
         if path.is_file():
             if path.suffix.lower() != ".pdf":
-                raise ValueError(f"PDFファイルではありません: {raw}")
+                raise ValueError(f"not a PDF file: {raw}")
             _validate_pdf(path)
             result.append(path)
 
@@ -56,7 +56,7 @@ def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
                 key=natural_sort_key,
             )
             if not pdfs:
-                console.warning(f"ディレクトリにPDFがありません: {raw}")
+                console.warning(f"no PDFs found in directory: {raw}")
             for pdf in pdfs:
                 try:
                     _validate_pdf(pdf)
@@ -65,6 +65,6 @@ def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
                     console.warning(str(e))
 
     if len(result) < 1:
-        raise ValueError("結合するPDFファイルが見つかりません")
+        raise ValueError("no PDF files to merge")
 
     return result

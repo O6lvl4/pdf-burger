@@ -21,7 +21,7 @@ _PROGRESS_THRESHOLD = 5
 def merge_pdfs(files: list[Path], output: Path) -> None:
     """Merge multiple PDF files into a single output file."""
     if not output.parent.exists():
-        console.verbose(f"  ディレクトリを作成: {output.parent}")
+        console.verbose(f"  creating directory: {output.parent}")
         output.parent.mkdir(parents=True, exist_ok=True)
 
     writer = PdfWriter()
@@ -35,13 +35,13 @@ def merge_pdfs(files: list[Path], output: Path) -> None:
             console=console.err,
             transient=True,
         ) as progress:
-            task = progress.add_task("結合中...", total=len(files))
+            task = progress.add_task("merging...", total=len(files))
             for f in files:
                 writer.append(str(f))
                 progress.update(task, advance=1)
     else:
         for f in files:
-            console.verbose(f"  追加: {f.name}")
+            console.verbose(f"  adding: {f.name}")
             writer.append(str(f))
 
     writer.write(str(output))
@@ -49,6 +49,6 @@ def merge_pdfs(files: list[Path], output: Path) -> None:
     writer.close()
 
     console.success(
-        f"{len(files)} 個のPDF ({page_count} ページ) を結合しました -> {output.name}"
+        f"merged {len(files)} PDFs ({page_count} pages) -> {output.name}"
     )
-    console.verbose(f"  出力先: {output}")
+    console.verbose(f"  output: {output}")

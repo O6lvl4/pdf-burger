@@ -33,51 +33,51 @@ def _unique_path(path: Path) -> Path:
         candidate = parent / f"{stem}_{i:03d}{suffix}"
         if not candidate.exists():
             return candidate
-    raise RuntimeError(f"一意の出力ファイル名を生成できません: {path}")
+    raise RuntimeError(f"cannot generate unique output filename: {path}")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pdf-burger",
-        description="複数のPDFファイルやディレクトリを1つのPDFに結合します。",
+        description="Stack multiple PDFs and directories into a single file.",
         epilog=(
             "examples:\n"
-            "  pdf-burger a.pdf b.pdf                  2つのPDFを結合 (-> merged.pdf)\n"
-            "  pdf-burger ./docs/ -o combined.pdf      ディレクトリ内のPDFを結合\n"
-            "  pdf-burger ./docs/ -r                   サブディレクトリも再帰的に検索\n"
-            "  pdf-burger *.pdf --dry-run              対象ファイルの確認のみ"
+            "  pdf-burger a.pdf b.pdf                  merge two PDFs (-> merged.pdf)\n"
+            "  pdf-burger ./docs/ -o combined.pdf      merge all PDFs in a directory\n"
+            "  pdf-burger ./docs/ -r                   search subdirectories recursively\n"
+            "  pdf-burger *.pdf --dry-run              preview target files only"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "inputs",
         nargs="+",
-        help="結合するPDFファイルまたはディレクトリ",
+        help="PDF files or directories to merge",
     )
     parser.add_argument(
         "-o", "--output",
         default=None,
-        help="出力ファイルパス (省略時: merged.pdf)",
+        help="output file path (default: merged.pdf)",
     )
     parser.add_argument(
         "-r", "--recursive",
         action="store_true",
-        help="ディレクトリを再帰的に検索する",
+        help="search directories recursively",
     )
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="出力ファイルが既に存在する場合に上書きを許可する",
+        help="allow overwriting an existing output file",
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="詳細ログを表示する",
+        help="show detailed log",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="実際には結合せず、対象ファイルの一覧を表示する",
+        help="list target files without merging",
     )
     parser.add_argument(
         "-V", "--version",
@@ -102,12 +102,12 @@ def _run(argv: list[str] | None = None) -> int:
     output = _resolve_output(args.output, args.inputs)
 
     if args.output is not None and output.exists() and not args.overwrite:
-        console.error(f"出力ファイルが既に存在します: {output}")
-        console.info("  --overwrite で上書きを許可できます")
+        console.error(f"output file already exists: {output}")
+        console.info("  use --overwrite to replace it")
         return 1
 
     if args.dry_run:
-        console.info(f"結合対象 ({len(files)} 件):")
+        console.info(f"target files ({len(files)}):")
         for f in files:
             console.info(f"  {f}")
         return 0
@@ -115,7 +115,7 @@ def _run(argv: list[str] | None = None) -> int:
     try:
         merge_pdfs(files, output)
     except Exception as e:
-        console.error(f"結合に失敗しました: {e}")
+        console.error(f"merge failed: {e}")
         return 1
 
     return 0
@@ -125,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return _run(argv)
     except KeyboardInterrupt:
-        console.error("中断されました")
+        console.error("interrupted")
         return 130
 
 
