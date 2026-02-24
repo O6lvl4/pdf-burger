@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pdf-burger"
-version = "0.2.0"
+version = "0.3.0"
 description = "Merge multiple PDF files and directories into one."
 requires-python = ">=3.10"
-dependencies = ["pypdf>=4.0"]
+dependencies = ["pypdf>=4.0", "rich>=13.0"]
 
 [project.scripts]
 pdf-burger = "pdf_burger.cli:main"

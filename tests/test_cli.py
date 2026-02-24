@@ -1,5 +1,6 @@
 """Tests for pdf_burger.cli."""
 
+import pytest
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -69,8 +70,51 @@ class TestCli:
         reader = PdfReader(str(output))
         assert len(reader.pages) == 2
 
+    def test_recursive_short_flag(self, make_pdf, tmp_path):
+        d = tmp_path / "top"
+        d.mkdir()
+        make_pdf("a.pdf", directory=d)
+        sub = d / "nested"
+        sub.mkdir()
+        make_pdf("b.pdf", directory=sub)
+        output = tmp_path / "out.pdf"
+        rc = main([str(d), "-o", str(output), "-r"])
+        assert rc == 0
+        reader = PdfReader(str(output))
+        assert len(reader.pages) == 2
+
     def test_verbose_flag(self, make_pdf, tmp_path):
         a = make_pdf("a.pdf")
         output = tmp_path / "out.pdf"
         rc = main([str(a), "-o", str(output), "--verbose"])
         assert rc == 0
+
+    def test_version_flag(self):
+        with pytest.raises(SystemExit) as exc_info:
+            main(["--version"])
+        assert exc_info.value.code == 0
+
+    def test_output_auto_generated(self, make_pdf, tmp_path, monkeypatch):
+        a = make_pdf("a.pdf")
+        b = make_pdf("b.pdf")
+        monkeypatch.chdir(tmp_path)
+        rc = main([str(a), str(b)])
+        assert rc == 0
+        assert (tmp_path / "merged.pdf").exists()
+
+    def test_output_auto_unique(self, make_pdf, tmp_path, monkeypatch):
+        a = make_pdf("a.pdf")
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "merged.pdf").write_text("dummy")
+        rc = main([str(a)])
+        assert rc == 0
+        assert (tmp_path / "merged_001.pdf").exists()
+
+    def test_single_dir_output_name(self, make_pdf, tmp_path, monkeypatch):
+        d = tmp_path / "invoices"
+        d.mkdir()
+        make_pdf("a.pdf", directory=d)
+        monkeypatch.chdir(tmp_path)
+        rc = main([str(d)])
+        assert rc == 0
+        assert (tmp_path / "invoices.pdf").exists()

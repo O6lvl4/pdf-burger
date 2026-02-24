@@ -57,10 +57,8 @@ class TestCollectPdfs:
         sub = d / "nested"
         sub.mkdir()
         make_pdf("b.pdf", directory=sub)
-        # Without recursive, only top-level
         result_flat = collect_pdfs([str(d)], recursive=False)
         assert len(result_flat) == 1
-        # With recursive, both
         result_rec = collect_pdfs([str(d)], recursive=True)
         assert len(result_rec) == 2
 
@@ -74,7 +72,7 @@ class TestCollectPdfs:
         with pytest.raises(ValueError, match="PDFファイルではありません"):
             collect_pdfs([str(txt)])
 
-    def test_empty_directory_warns(self, tmp_path, caplog):
+    def test_empty_directory_warns(self, tmp_path):
         d = tmp_path / "empty"
         d.mkdir()
         with pytest.raises(ValueError, match="結合するPDFファイルが見つかりません"):
@@ -85,3 +83,19 @@ class TestCollectPdfs:
         d.mkdir()
         with pytest.raises(ValueError):
             collect_pdfs([str(d)])
+
+    def test_corrupt_explicit_file_raises(self, tmp_path):
+        bad = tmp_path / "bad.pdf"
+        bad.write_text("not a pdf")
+        with pytest.raises(ValueError, match="PDFファイルを読み込めません"):
+            collect_pdfs([str(bad)])
+
+    def test_corrupt_file_in_dir_skipped(self, make_pdf, tmp_path):
+        d = tmp_path / "docs"
+        d.mkdir()
+        make_pdf("good.pdf", directory=d)
+        bad = d / "bad.pdf"
+        bad.write_text("not a pdf")
+        result = collect_pdfs([str(d)])
+        assert len(result) == 1
+        assert result[0].name == "good.pdf"

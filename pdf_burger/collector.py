@@ -1,9 +1,11 @@
 """PDF file collection from paths and directories."""
 
+from __future__ import annotations
+
 import re
 from pathlib import Path
 
-from pdf_burger.logger import logger
+from pdf_burger import console
 
 
 def natural_sort_key(path: Path) -> list:
@@ -12,11 +14,26 @@ def natural_sort_key(path: Path) -> list:
     return [int(p) if p.isdigit() else p.lower() for p in parts]
 
 
+def _validate_pdf(path: Path) -> None:
+    """Quick validation that a file is a readable PDF."""
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(path))
+        if len(reader.pages) == 0:
+            raise ValueError(f"PDFにページがありません: {path}")
+    except ValueError:
+        raise
+    except Exception as e:
+        raise ValueError(f"PDFファイルを読み込めません: {path} ({e})")
+
+
 def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
     """Collect PDF files from file paths and directories.
 
     Files are returned in input order. PDFs within a directory are sorted
-    in natural order.
+    in natural order. Corrupt PDFs in directories are skipped with a warning;
+    explicitly specified corrupt PDFs cause an error.
     """
     result: list[Path] = []
 
@@ -29,6 +46,7 @@ def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
         if path.is_file():
             if path.suffix.lower() != ".pdf":
                 raise ValueError(f"PDFファイルではありません: {raw}")
+            _validate_pdf(path)
             result.append(path)
 
         elif path.is_dir():
@@ -38,8 +56,13 @@ def collect_pdfs(inputs: list[str], recursive: bool = False) -> list[Path]:
                 key=natural_sort_key,
             )
             if not pdfs:
-                logger.warning("ディレクトリにPDFがありません: %s", raw)
-            result.extend(pdfs)
+                console.warning(f"ディレクトリにPDFがありません: {raw}")
+            for pdf in pdfs:
+                try:
+                    _validate_pdf(pdf)
+                    result.append(pdf)
+                except ValueError as e:
+                    console.warning(str(e))
 
     if len(result) < 1:
         raise ValueError("結合するPDFファイルが見つかりません")

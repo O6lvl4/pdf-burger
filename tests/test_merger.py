@@ -30,3 +30,9 @@ class TestMergePdfs:
         merge_pdfs(files, output)
         reader = PdfReader(str(output))
         assert len(reader.pages) == 5
+
+    def test_merge_creates_output_directory(self, make_pdf, tmp_path):
+        a = make_pdf("a.pdf")
+        output = tmp_path / "subdir" / "deep" / "out.pdf"
+        merge_pdfs([a], output)
+        assert output.exists()
